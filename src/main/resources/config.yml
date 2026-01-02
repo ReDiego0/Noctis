@@ -1,0 +1,50 @@
+# ==========================================
+#         NOCTIS - RADIACIÓN
+# ==========================================
+
+settings:
+  world-name: "world"
+  # Radiación base por segundo (Día)
+  base-radiation: 1.5
+  # Multiplicador durante la noche (ej. 1.5 * 3.0 = 4.5 rads/s)
+  night-multiplier: 3.0
+  # Cantidad a reducir por segundo al estar en una ciudad (Towny)
+  towny-cleanup-rate: 20.0
+  # Límite máximo de reducción de daño por armadura (0.90 = 90%)
+  max-mitigation-cap: 0.90
+  # Daño (corazones) por segundo al llegar al 100%
+  critical-damage: 2.0
+
+# Porcentajes de protección por pieza (0.01 = 1%, 1.0 = 100%)
+# El sistema busca el material exacto.
+armor-protection:
+  LEATHER_HELMET: 0.02
+  LEATHER_CHESTPLATE: 0.02
+  LEATHER_LEGGINGS: 0.02
+  LEATHER_BOOTS: 0.02
+  IRON_HELMET: 0.05
+  IRON_CHESTPLATE: 0.05
+  IRON_LEGGINGS: 0.05
+  IRON_BOOTS: 0.05
+  DIAMOND_HELMET: 0.08
+  DIAMOND_CHESTPLATE: 0.08
+  DIAMOND_LEGGINGS: 0.08
+  DIAMOND_BOOTS: 0.08
+  NETHERITE_HELMET: 0.12
+  NETHERITE_CHESTPLATE: 0.12
+  NETHERITE_LEGGINGS: 0.12
+  NETHERITE_BOOTS: 0.12
+
+visuals:
+  bar-symbol: "|"
+  bar-length: 20
+  # Colores en formato Hex (MiniMessage)
+  # Low: Seguro (< 50%)
+  color-low-start: "#55FF55"
+  color-low-end: "#00AA00"
+  # Mid: Advertencia (50% - 80%)
+  color-mid-start: "#FFFF55"
+  color-mid-end: "#FFAA00"
+  # High: Crítico (> 80%)
+  color-high-start: "#FF5555"
+  color-high-end: "#AA0000"

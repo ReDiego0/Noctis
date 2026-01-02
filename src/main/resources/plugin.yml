@@ -1,0 +1,6 @@
+name: Noctis
+version: @version@
+main: org.ReDiego0.noctis.Noctis
+api-version: '1.21'
+depend: [Towny]
+softdepend: [PlaceholderAPI]
