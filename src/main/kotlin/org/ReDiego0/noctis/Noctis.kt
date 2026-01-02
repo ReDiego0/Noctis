@@ -2,6 +2,7 @@ package org.ReDiego0.noctis
 
 import dev.jorel.commandapi.CommandAPI
 import dev.jorel.commandapi.CommandAPIBukkitConfig
+import net.milkbowl.vault.permission.Permission
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 import org.ReDiego0.noctis.compat.NoctisExpansion
@@ -28,6 +29,9 @@ class Noctis : JavaPlugin() {
     lateinit var taxTask: TaxTask private set
     lateinit var partyManager: PartyManager private set
 
+    // Vault Permission Provider
+    var perms: Permission? = null
+
     override fun onLoad() {
         CommandAPI.onLoad(CommandAPIBukkitConfig(this).verboseOutput(true))
     }
@@ -36,19 +40,24 @@ class Noctis : JavaPlugin() {
         noctisConfig = NoctisConfig(this)
         CommandAPI.onEnable()
 
+        // Setup Vault
+        if (!setupPermissions()) {
+            logger.warning("Vault no encontrado o sin plugin de permisos. Comandos de Jobs limitados.")
+        }
+
         radiationManager = RadiationManager()
         jobManager = JobManager(this)
         currencyManager = CurrencyManager(this, noctisConfig)
         bankDatabase = BankDatabase(this)
         taxTask = TaxTask(this, bankDatabase)
-        partyManager = PartyManager()
+        partyManager = PartyManager(noctisConfig) // Pasar config aquí
 
         taxTask.runTaskTimerAsynchronously(this, 1200L, 1200L)
         RadiationTask(this, radiationManager, noctisConfig, taxTask)
             .runTaskTimerAsynchronously(this, 20L, 20L)
 
         EconomyCommands(currencyManager, bankDatabase, taxTask)
-        JobCommand(jobManager)
+        JobCommand(this, jobManager) // Pasar 'this' (Noctis) aquí
         PartyCommand(partyManager)
 
         val pm = server.pluginManager
@@ -72,5 +81,12 @@ class Noctis : JavaPlugin() {
                 value
             )
         }
+    }
+
+    private fun setupPermissions(): Boolean {
+        if (server.pluginManager.getPlugin("Vault") == null) return false
+        val rsp = server.servicesManager.getRegistration(Permission::class.java)
+        perms = rsp?.provider
+        return perms != null
     }
 }

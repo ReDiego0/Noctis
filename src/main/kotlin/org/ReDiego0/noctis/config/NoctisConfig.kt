@@ -14,6 +14,20 @@ class NoctisConfig(private val plugin: Noctis) {
     var maxMitigationCap: Double = 0.90
     var criticalDamage: Double = 2.0
 
+    // Economy Settings
+    var currencyName: String = "<gradient:#00ffff:#0088ff>Célula de Energía</gradient>"
+    var currencyMaterial: Material = Material.AMETHYST_SHARD
+    var currencyModelData: Int = 0
+    var taxCost: Int = 10
+    var taxIntervalHours: Long = 24
+    var taxIntervalMinutes: Long = 0
+
+    // Party Settings
+    var partyMaxSize: Int = 5
+
+    // Jobs Settings
+    var jobsUseGroups: Boolean = false
+
     // Visual Settings
     var barSymbol: String = "|"
     var barLength: Int = 20
@@ -43,6 +57,22 @@ class NoctisConfig(private val plugin: Noctis) {
         townyCleanupRate = config.getDouble("settings.towny-cleanup-rate", 20.0)
         maxMitigationCap = config.getDouble("settings.max-mitigation-cap", 0.90)
         criticalDamage = config.getDouble("settings.critical-damage", 2.0)
+
+        // Economy
+        currencyName = config.getString("economy.currency-name", "<gradient:#00ffff:#0088ff>Célula de Energía</gradient>")!!
+        val matName = config.getString("economy.item-material", "AMETHYST_SHARD")!!
+        currencyMaterial = Material.getMaterial(matName) ?: Material.AMETHYST_SHARD
+        currencyModelData = config.getInt("economy.custom-model-data", 0)
+
+        taxCost = config.getInt("economy.taxes.cost", 10)
+        taxIntervalHours = config.getLong("economy.taxes.interval-hours", 24)
+        taxIntervalMinutes = config.getLong("economy.taxes.interval-minutes", 0)
+
+        // Party
+        partyMaxSize = config.getInt("party.max-size", 5)
+
+        // Jobs
+        jobsUseGroups = config.getBoolean("jobs.use-groups", false)
 
         // Load Visuals
         barSymbol = config.getString("visuals.bar-symbol", "|")!!

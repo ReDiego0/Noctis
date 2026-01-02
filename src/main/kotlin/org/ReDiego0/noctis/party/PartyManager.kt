@@ -3,14 +3,15 @@ package org.ReDiego0.noctis.party
 import com.palmergames.bukkit.towny.TownyAPI
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.entity.Player
+import org.ReDiego0.noctis.config.NoctisConfig
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class PartyManager {
+class PartyManager(private val config: NoctisConfig) {
 
     private val playerPartyMap = ConcurrentHashMap<UUID, UUID>()
     private val parties = ConcurrentHashMap<UUID, Party>()
-    private val invites = ConcurrentHashMap<UUID, UUID>() // Target -> PartyID
+    private val invites = ConcurrentHashMap<UUID, UUID>()
 
     fun getParty(partyId: UUID): Party? = parties[partyId]
 
@@ -40,7 +41,8 @@ class PartyManager {
         val party = getPlayerParty(leader.uniqueId) ?: return "no_party"
         if (party.getLeader()?.uuid != leader.uniqueId) return "not_leader"
         if (getPlayerParty(target.uniqueId) != null) return "target_has_party"
-        if (party.getSize() >= 5) return "party_full"
+
+        if (party.getSize() >= config.partyMaxSize) return "party_full"
 
         if (!canGroupTogether(leader, target)) {
             return "geo_conflict"
@@ -79,7 +81,7 @@ class PartyManager {
         if (party.getLeader()?.uuid != leader.uniqueId) return false
 
         val targetMember = party.getMembers().find { it.getPlayer()?.name.equals(targetName, ignoreCase = true) } ?: return false
-        if (targetMember.uuid == leader.uniqueId) return false // No te puedes kickear a ti mismo
+        if (targetMember.uuid == leader.uniqueId) return false
 
         party.removeMember(targetMember.uuid)
         playerPartyMap.remove(targetMember.uuid)
@@ -94,9 +96,9 @@ class PartyManager {
         val res1 = towny.getResident(p1)
         val res2 = towny.getResident(p2)
 
-        if (res1 == null || res2 == null) return true // Fallback seguro
-        if (!res1.hasTown() && !res2.hasTown()) return true // Nómadas
-        if (!res1.hasTown() || !res2.hasTown()) return true // Mercenarios
+        if (res1 == null || res2 == null) return true
+        if (!res1.hasTown() && !res2.hasTown()) return true
+        if (!res1.hasTown() || !res2.hasTown()) return true
 
         val town1 = res1.townOrNull!!
         val town2 = res2.townOrNull!!

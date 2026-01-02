@@ -18,6 +18,7 @@ repositories {
     maven("https://maven.citizensnpcs.co/repo")
     maven("https://mvn.lumine.io/repository/maven-public/")
     maven("https://maven.enginehub.org/repo/")
+    maven("https://jitpack.io")
 }
 
 
@@ -33,6 +34,7 @@ dependencies {
     compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core:2.11.1")
     compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:2.11.1") { isTransitive = false }
     implementation("dev.jorel:commandapi-bukkit-shade:9.5.3")
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
 }
 
 

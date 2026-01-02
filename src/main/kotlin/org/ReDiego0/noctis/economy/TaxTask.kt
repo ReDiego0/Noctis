@@ -15,22 +15,23 @@ class TaxTask(
 
     private val mm = MiniMessage.miniMessage()
     private val protectedTowns = java.util.concurrent.ConcurrentHashMap.newKeySet<UUID>()
+
     override fun run() {
         val now = System.currentTimeMillis()
         var nextRun = database.getNextTaxTime()
-        val intervalHours = plugin.config.getLong("economy.taxes.interval-hours", 24)
-        val intervalMillis = TimeUnit.HOURS.toMillis(intervalHours)
+
+        val hoursMs = TimeUnit.HOURS.toMillis(plugin.noctisConfig.taxIntervalHours)
+        val minutesMs = TimeUnit.MINUTES.toMillis(plugin.noctisConfig.taxIntervalMinutes)
+        val totalInterval = hoursMs + minutesMs
 
         if (nextRun == 0L) {
-            nextRun = now + intervalMillis
+            nextRun = now + totalInterval
             database.setNextTaxTime(nextRun)
         }
 
         if (now >= nextRun) {
             collectTaxes()
-            database.setNextTaxTime(now + intervalMillis)
-        } else {
-            { /* nada */}
+            database.setNextTaxTime(now + totalInterval)
         }
     }
 
@@ -55,15 +56,12 @@ class TaxTask(
                 val msg = mm.deserialize("<red><bold>[ALERTA] <gray>Fallo crítico de energía. Escudos desactivados.")
                 town.residents.forEach { it.player?.sendMessage(msg) }
                 plugin.logger.warning("Ciudad ${town.name} sin combustible.")
-                // Humillación pública wuajaja
+
                 Bukkit.broadcast(mm.deserialize("<red>La ciudad ${town.name} ha perdido sus escudos."))
             }
         }
     }
 
-    /**
-     * Metodo API para que RadiationTask verifique si una ciudad es segura.
-     */
     fun isTownProtected(townUUID: UUID): Boolean {
         return protectedTowns.contains(townUUID)
     }

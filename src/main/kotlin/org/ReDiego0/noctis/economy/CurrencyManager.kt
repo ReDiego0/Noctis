@@ -15,16 +15,13 @@ class CurrencyManager(private val plugin: Noctis, private val config: NoctisConf
     private val currencyKey = NamespacedKey(plugin, "noctis_currency")
 
     fun getItem(amount: Int): ItemStack {
-        val matName = plugin.config.getString("economy.item-material", "AMETHYST_SHARD")!!
-        val material = Material.getMaterial(matName) ?: Material.AMETHYST_SHARD
-
-        val item = ItemStack(material, amount)
+        val item = ItemStack(config.currencyMaterial, amount)
         val meta = item.itemMeta
 
-        val displayName = plugin.config.getString("economy.currency-name", "<aqua>Energy Cell")!!
-        meta.displayName(mm.deserialize(displayName))
+        val nameComponent = mm.deserialize(config.currencyName)
+        meta.displayName(nameComponent)
 
-        val cmd = plugin.config.getInt("economy.custom-model-data", 0)
+        val cmd = config.currencyModelData
         if (cmd > 0) meta.setCustomModelData(cmd)
 
         meta.persistentDataContainer.set(currencyKey, PersistentDataType.BYTE, 1.toByte())
@@ -49,19 +46,21 @@ class CurrencyManager(private val plugin: Noctis, private val config: NoctisConf
 
     fun take(player: Player, amount: Int): Boolean {
         if (count(player) < amount) return false
-        var toRemove = amount
-        for (item in player.inventory.contents) {
+        var remaining = amount
+        val inventory = player.inventory.contents
+
+        for (i in inventory.indices) {
+            val item = inventory[i]
             if (item != null && isValidCurrency(item)) {
-                val currentAmount = item.amount
-                if (currentAmount <= toRemove) {
-                    toRemove -= currentAmount
-                    item.amount = 0
+                if (item.amount <= remaining) {
+                    remaining -= item.amount
+                    player.inventory.setItem(i, null) // Eliminación segura
                 } else {
-                    item.amount = currentAmount - toRemove
-                    toRemove = 0
+                    item.amount -= remaining
+                    remaining = 0
                 }
             }
-            if (toRemove <= 0) break
+            if (remaining <= 0) break
         }
         return true
     }
