@@ -67,4 +67,22 @@ class TaxTask(
     fun isTownProtected(townUUID: UUID): Boolean {
         return protectedTowns.contains(townUUID)
     }
+
+    fun tryReactivate(townUUID: UUID, townName: String): Boolean {
+        if (isTownProtected(townUUID)) return false
+
+        val cost = plugin.config.getInt("economy.taxes.cost", 10)
+        if (database.removeBalance(townUUID, cost)) {
+            protectedTowns.add(townUUID)
+
+            val msg = mm.deserialize("<green>[SISTEMA] <white>Pago recibido. <aqua>Escudos de radiación REACTIVADOS.")
+            TownyAPI.getInstance().getTown(townUUID)?.residents?.forEach { res ->
+                res.player?.sendMessage(msg)
+            }
+            plugin.logger.info("Ciudad $townName reactivó sus escudos tras depósito manual.")
+            return true
+        }
+
+        return false
+    }
 }

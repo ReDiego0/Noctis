@@ -66,9 +66,16 @@ class EconomyCommands(
                         sender.sendMessage(mm.deserialize("<red>Cantidad inválida."))
                         return true
                     }
+
                     if (currencyManager.take(sender, amount)) {
+
                         database.addBalance(town.uuid, amount)
                         sender.sendMessage(mm.deserialize("<green>Depositaste <white>$amount <green>al banco de la ciudad."))
+
+                        if (!taxTask.isTownProtected(town.uuid)) {
+                            taxTask.tryReactivate(town.uuid, town.name)
+                        }
+
                     } else {
                         sender.sendMessage(mm.deserialize("<red>No tienes suficiente combustible en el inventario."))
                     }
