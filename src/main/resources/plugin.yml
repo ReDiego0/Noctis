@@ -1,5 +1,5 @@
 name: Noctis
-version: @version@
+version: "1.0.0"
 main: org.ReDiego0.noctis.Noctis
 api-version: '1.21'
 depend: [Towny]

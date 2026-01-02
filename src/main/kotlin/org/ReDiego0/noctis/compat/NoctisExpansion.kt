@@ -1,6 +1,8 @@
 package org.ReDiego0.noctis.compat
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
+import net.kyori.adventure.text.minimessage.MiniMessage
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.bukkit.entity.Player
 import org.ReDiego0.noctis.Noctis
 import org.ReDiego0.noctis.config.NoctisConfig
@@ -10,6 +12,9 @@ class NoctisExpansion(
     private val plugin: Noctis,
     private val config: NoctisConfig
 ) : PlaceholderExpansion() {
+
+    private val miniMessage = MiniMessage.miniMessage()
+    private val legacySerializer = LegacyComponentSerializer.legacySection()
 
     override fun getIdentifier(): String = "noctis"
     override fun getAuthor(): String = "ReDiego0"
@@ -23,12 +28,18 @@ class NoctisExpansion(
 
         return when (params.lowercase()) {
             "value" -> String.format("%.1f", rads)
-            "bar" -> generateBar(rads)
+            "bar" -> getLegacyBar(rads)
             else -> null
         }
     }
 
-    private fun generateBar(current: Double): String {
+    private fun getLegacyBar(current: Double): String {
+        val rawMiniMessage = generateMiniMessageString(current)
+        val component = miniMessage.deserialize(rawMiniMessage)
+        return legacySerializer.serialize(component)
+    }
+
+    private fun generateMiniMessageString(current: Double): String {
         val maxBars = config.barLength
         val percent = (current / 100.0).coerceIn(0.0, 1.0)
         val filledBars = (maxBars * percent).roundToInt()
