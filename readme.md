@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="[https://via.placeholder.com/256x64.png?text=NOCTIS+CORE](https://cdn.discordapp.com/icons/1283550915214835764/9ef2b3db8593d7cc069b964a5e74d231.webp)" alt="Noctis Logo" width="256">
+  <img src="https://cdn.discordapp.com/icons/1283550915214835764/9ef2b3db8593d7cc069b964a5e74d231.webp" alt="Noctis Logo" width="256">
   <br>
 </h1>
 
