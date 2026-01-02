@@ -14,6 +14,10 @@ repositories {
     }
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://repo.glaremasters.me/repository/towny/")
+    maven("https://repo.codemc.org/repository/maven-public/")
+    maven("https://maven.citizensnpcs.co/repo")
+    maven("https://mvn.lumine.io/repository/maven-public/")
+    maven("https://maven.enginehub.org/repo/")
 }
 
 
@@ -22,6 +26,13 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.palmergames.bukkit.towny:towny:0.100.3.0")
+    compileOnly("net.citizensnpcs:citizens-main:2.0.35-SNAPSHOT") {
+        exclude(group = "*", module = "*")
+    }
+    compileOnly("io.lumine:Mythic-Dist:5.7.2")
+    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core:2.11.1")
+    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:2.11.1") { isTransitive = false }
+    implementation("dev.jorel:commandapi-bukkit-shade:9.5.3")
 }
 
 
@@ -41,6 +52,11 @@ kotlin {
 
 tasks.build {
     dependsOn("shadowJar")
+}
+
+tasks.shadowJar {
+    relocate("dev.jorel.commandapi", "org.ReDiego0.noctis.utils.commandapi")
+    minimize()
 }
 
 tasks.processResources {
