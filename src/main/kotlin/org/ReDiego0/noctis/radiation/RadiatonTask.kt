@@ -9,12 +9,14 @@ import org.bukkit.Material
 import org.bukkit.scheduler.BukkitRunnable
 import org.ReDiego0.noctis.Noctis
 import org.ReDiego0.noctis.config.NoctisConfig
+import org.ReDiego0.noctis.economy.TaxTask
 import java.util.UUID
 
 class RadiationTask(
     private val plugin: Noctis,
     private val manager: RadiationManager,
-    private val config: NoctisConfig
+    private val config: NoctisConfig,
+    private val taxTask: TaxTask
 ) : BukkitRunnable() {
 
     override fun run() {
@@ -28,19 +30,29 @@ class RadiationTask(
             if (player.world.name != config.worldName) continue
             if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) continue
 
-            val location = player.location
+            var isSafeZone = false
             val towny = TownyAPI.getInstance()
+            val location = player.location
 
             if (!towny.isWilderness(location)) {
-                manager.modifyRadiation(player.uniqueId, -config.townyCleanupRate)
-                continue
+                val townBlock = towny.getTownBlock(location)
+                if (townBlock != null && townBlock.hasTown()) {
+                    val town = townBlock.town
+                    if (taxTask.isTownProtected(town.uuid)) {
+                        isSafeZone = true
+                    }
+                }
             }
 
-            val mitigation = calculateMitigation(player.inventory.armorContents)
-            val effectiveRad = (config.baseRadiation * currentMultiplier) * (1.0 - mitigation)
+            if (isSafeZone) {
+                manager.modifyRadiation(player.uniqueId, -config.townyCleanupRate)
+            } else {
+                val mitigation = calculateMitigation(player.inventory.armorContents)
+                val effectiveRad = (config.baseRadiation * currentMultiplier) * (1.0 - mitigation)
 
-            val newTotal = manager.modifyRadiation(player.uniqueId, effectiveRad)
-            affectedPlayers[player.uniqueId] = newTotal
+                val newTotal = manager.modifyRadiation(player.uniqueId, effectiveRad)
+                affectedPlayers[player.uniqueId] = newTotal
+            }
         }
 
         if (affectedPlayers.isNotEmpty()) {
@@ -52,12 +64,10 @@ class RadiationTask(
 
     private fun calculateMitigation(armorContents: Array<out org.bukkit.inventory.ItemStack?>): Double {
         var mitigation = 0.0
-
         for (item in armorContents) {
             if (item == null || item.type == Material.AIR) continue
             mitigation += config.getArmorProtection(item.type)
         }
-
         return mitigation.coerceAtMost(config.maxMitigationCap)
     }
 
@@ -66,7 +76,6 @@ class RadiationTask(
             val player = Bukkit.getPlayer(uuid) ?: continue
 
             if (rads >= 100.0) {
-                // Daño verdadero configurable
                 if (player.health > config.criticalDamage) {
                     player.health = player.health - config.criticalDamage
                 } else {

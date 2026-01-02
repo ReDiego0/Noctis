@@ -48,3 +48,20 @@ visuals:
   # High: Crítico (> 80%)
   color-high-start: "#FF5555"
   color-high-end: "#AA0000"
+
+  # ==========================================
+  #         NOCTIS - ECONOMIA
+  # ==========================================
+  economy:
+    # Nombre del recurso en el juego (Lore/Mensajes)
+    currency-name: "<gradient:#00ffff:#0088ff>Célula de Energía</gradient>"
+    # Material del item físico
+    item-material: "AMETHYST_SHARD"
+    # Custom Model Data (para texturas resource pack), poner 0 si no se usa
+    custom-model-data: 0
+
+    taxes:
+      # Costo por intervalo
+      cost: 10
+      # Intervalo en horas reales
+      interval-hours: 24

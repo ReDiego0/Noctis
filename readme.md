@@ -41,7 +41,6 @@ Roles inmutables asignados por permiso (`noctis.job.<id>`).
 ## Configuración (`config.yml`)
 
 ```yaml
-settings:
 # ==========================================
 #         NOCTIS - RADIACIÓN
 # ==========================================

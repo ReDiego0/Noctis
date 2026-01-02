@@ -5,6 +5,11 @@ api-version: '1.21'
 depend: [Towny]
 softdepend: [PlaceholderAPI]
 commands:
-  jobs:
-    description: Comandos de administración de trabajos.
+  noctisjobs:
     permission: noctis.admin.jobs
+  noctiseco:
+    permission: noctis.admin.economy
+  bank:
+    permission: noctis.player.bank
+  payfuel:
+    permission: noctis.player.pay

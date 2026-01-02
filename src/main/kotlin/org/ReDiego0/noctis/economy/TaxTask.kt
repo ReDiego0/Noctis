@@ -1,0 +1,70 @@
+package org.ReDiego0.noctis.economy
+
+import com.palmergames.bukkit.towny.TownyAPI
+import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.Bukkit
+import org.bukkit.scheduler.BukkitRunnable
+import org.ReDiego0.noctis.Noctis
+import java.util.UUID
+import java.util.concurrent.TimeUnit
+
+class TaxTask(
+    private val plugin: Noctis,
+    private val database: BankDatabase
+) : BukkitRunnable() {
+
+    private val mm = MiniMessage.miniMessage()
+    private val protectedTowns = java.util.concurrent.ConcurrentHashMap.newKeySet<UUID>()
+    override fun run() {
+        val now = System.currentTimeMillis()
+        var nextRun = database.getNextTaxTime()
+        val intervalHours = plugin.config.getLong("economy.taxes.interval-hours", 24)
+        val intervalMillis = TimeUnit.HOURS.toMillis(intervalHours)
+
+        if (nextRun == 0L) {
+            nextRun = now + intervalMillis
+            database.setNextTaxTime(nextRun)
+        }
+
+        if (now >= nextRun) {
+            collectTaxes()
+            database.setNextTaxTime(now + intervalMillis)
+        } else {
+            { /* nada */}
+        }
+    }
+
+    fun forceCollection() {
+        collectTaxes()
+    }
+
+    private fun collectTaxes() {
+        plugin.logger.info("=== INICIANDO COBRO DE COMBUSTIBLE NOCTIS ===")
+
+        val towny = TownyAPI.getInstance()
+        val cost = plugin.config.getInt("economy.taxes.cost", 10)
+
+        protectedTowns.clear()
+
+        for (town in towny.towns) {
+            if (database.removeBalance(town.uuid, cost)) {
+                protectedTowns.add(town.uuid)
+                val msg = mm.deserialize("<green>[SISTEMA] <gray>Combustible descontado (-$cost). Escudos activos.")
+                town.residents.forEach { it.player?.sendMessage(msg) }
+            } else {
+                val msg = mm.deserialize("<red><bold>[ALERTA] <gray>Fallo crítico de energía. Escudos desactivados.")
+                town.residents.forEach { it.player?.sendMessage(msg) }
+                plugin.logger.warning("Ciudad ${town.name} sin combustible.")
+                // Humillación pública wuajaja
+                Bukkit.broadcast(mm.deserialize("<red>La ciudad ${town.name} ha perdido sus escudos."))
+            }
+        }
+    }
+
+    /**
+     * Metodo API para que RadiationTask verifique si una ciudad es segura.
+     */
+    fun isTownProtected(townUUID: UUID): Boolean {
+        return protectedTowns.contains(townUUID)
+    }
+}
