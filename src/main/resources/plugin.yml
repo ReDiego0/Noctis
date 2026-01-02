@@ -3,13 +3,8 @@ version: "1.0.0"
 main: org.ReDiego0.noctis.Noctis
 api-version: '1.21'
 depend: [Towny]
-softdepend: [PlaceholderAPI]
-commands:
-  noctisjobs:
-    permission: noctis.admin.jobs
-  noctiseco:
-    permission: noctis.admin.economy
-  bank:
-    permission: noctis.player.bank
-  payfuel:
-    permission: noctis.player.pay
+softdepend: [Vault, PlaceholderAPI, MythicMobs, Citizens, FastAsyncWorldEdit]
+permissions:
+  noctis.admin.*:
+    description: Permisos de admin
+    default: op

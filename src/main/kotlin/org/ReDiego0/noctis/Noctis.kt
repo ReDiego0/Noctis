@@ -29,8 +29,8 @@ class Noctis : JavaPlugin() {
     lateinit var taxTask: TaxTask private set
     lateinit var partyManager: PartyManager private set
 
-    // Vault Permission Provider
     var perms: Permission? = null
+
 
     override fun onLoad() {
         CommandAPI.onLoad(CommandAPIBukkitConfig(this).verboseOutput(true))
@@ -40,7 +40,6 @@ class Noctis : JavaPlugin() {
         noctisConfig = NoctisConfig(this)
         CommandAPI.onEnable()
 
-        // Setup Vault
         if (!setupPermissions()) {
             logger.warning("Vault no encontrado o sin plugin de permisos. Comandos de Jobs limitados.")
         }
@@ -74,12 +73,14 @@ class Noctis : JavaPlugin() {
 
     override fun onDisable() {
         CommandAPI.onDisable()
-        radiationManager.getCacheSnapshot().forEach { (uuid, value) ->
-            Bukkit.getPlayer(uuid)?.persistentDataContainer?.set(
-                org.bukkit.NamespacedKey(this, "radiation_level"),
-                org.bukkit.persistence.PersistentDataType.DOUBLE,
-                value
-            )
+        if (::radiationManager.isInitialized) {
+            radiationManager.getCacheSnapshot().forEach { (uuid, value) ->
+                Bukkit.getPlayer(uuid)?.persistentDataContainer?.set(
+                    org.bukkit.NamespacedKey(this, "radiation_level"),
+                    org.bukkit.persistence.PersistentDataType.DOUBLE,
+                    value
+                )
+            }
         }
     }
 
