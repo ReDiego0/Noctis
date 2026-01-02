@@ -4,3 +4,7 @@ main: org.ReDiego0.noctis.Noctis
 api-version: '1.21'
 depend: [Towny]
 softdepend: [PlaceholderAPI]
+commands:
+  jobs:
+    description: Comandos de administración de trabajos.
+    permission: noctis.admin.jobs
