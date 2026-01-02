@@ -1,11 +1,13 @@
 package org.ReDiego0.noctis.compat
 
+import com.palmergames.bukkit.towny.TownyAPI
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.bukkit.entity.Player
 import org.ReDiego0.noctis.Noctis
 import org.ReDiego0.noctis.config.NoctisConfig
+import org.ReDiego0.noctis.jobs.JobType
 import kotlin.math.roundToInt
 
 class NoctisExpansion(
@@ -29,8 +31,25 @@ class NoctisExpansion(
         return when (params.lowercase()) {
             "value" -> String.format("%.1f", rads)
             "bar" -> getLegacyBar(rads)
+            "job_display" -> {
+                JobType.getJob(player).displayName
+            }
+            "town_fuel" -> {
+                getTownFuel(player)
+            }
             else -> null
         }
+    }
+
+    private fun getTownFuel(player: Player): String {
+        val resident = TownyAPI.getInstance().getResident(player)
+        if (resident != null && resident.hasTown()) {
+            val town = resident.townOrNull
+            if (town != null) {
+                return plugin.bankDatabase.getBalance(town.uuid).toString()
+            }
+        }
+        return "N/A"
     }
 
     private fun getLegacyBar(current: Double): String {
