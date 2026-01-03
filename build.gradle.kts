@@ -1,7 +1,8 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     kotlin("jvm") version "2.3.0"
-    id("com.gradleup.shadow") version "8.3.0"
-    id("xyz.jpenilla.run-paper") version "2.3.1"
+    id("io.github.goooler.shadow") version "8.1.8"
 }
 
 group = "org.ReDiego0"
@@ -9,9 +10,7 @@ version = "1.0.0"
 
 repositories {
     mavenCentral()
-    maven("https://repo.papermc.io/repository/maven-public/") {
-        name = "papermc-repo"
-    }
+    maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://repo.glaremasters.me/repository/towny/")
     maven("https://repo.codemc.org/repository/maven-public/")
@@ -21,10 +20,10 @@ repositories {
     maven("https://jitpack.io")
 }
 
-
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.palmergames.bukkit.towny:towny:0.100.3.0")
     compileOnly("net.citizensnpcs:citizens-main:2.0.35-SNAPSHOT") {
@@ -33,19 +32,8 @@ dependencies {
     compileOnly("io.lumine:Mythic-Dist:5.7.2")
     compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core:2.11.1")
     compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:2.11.1") { isTransitive = false }
-    implementation("dev.jorel:commandapi-bukkit-shade:9.5.3")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
         exclude(group = "org.bukkit", module = "bukkit")
-    }
-}
-
-
-tasks {
-    runServer {
-        // Configure the Minecraft version for our task.
-        // This is the only required configuration besides applying the plugin.
-        // Your plugin's jar (or shadowJar if present) will be used automatically.
-        minecraftVersion("1.21")
     }
 }
 
@@ -58,8 +46,7 @@ tasks.build {
     dependsOn("shadowJar")
 }
 
-tasks.shadowJar {
-    relocate("dev.jorel.commandapi", "org.ReDiego0.noctis.utils.commandapi")
+tasks.withType<ShadowJar>() {
     minimize()
 }
 

@@ -1,7 +1,5 @@
 package org.ReDiego0.noctis
 
-import dev.jorel.commandapi.CommandAPI
-import dev.jorel.commandapi.CommandAPIBukkitConfig
 import net.milkbowl.vault.permission.Permission
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
@@ -31,14 +29,8 @@ class Noctis : JavaPlugin() {
 
     var perms: Permission? = null
 
-
-    override fun onLoad() {
-        CommandAPI.onLoad(CommandAPIBukkitConfig(this).verboseOutput(true))
-    }
-
     override fun onEnable() {
         noctisConfig = NoctisConfig(this)
-        CommandAPI.onEnable()
 
         if (!setupPermissions()) {
             logger.warning("Vault no encontrado o sin plugin de permisos. Comandos de Jobs limitados.")
@@ -49,15 +41,15 @@ class Noctis : JavaPlugin() {
         currencyManager = CurrencyManager(this, noctisConfig)
         bankDatabase = BankDatabase(this)
         taxTask = TaxTask(this, bankDatabase)
-        partyManager = PartyManager(noctisConfig) // Pasar config aquí
+        partyManager = PartyManager(noctisConfig)
 
         taxTask.runTaskTimerAsynchronously(this, 1200L, 1200L)
         RadiationTask(this, radiationManager, noctisConfig, taxTask)
             .runTaskTimerAsynchronously(this, 20L, 20L)
 
-        EconomyCommands(currencyManager, bankDatabase, taxTask)
-        JobCommand(this, jobManager) // Pasar 'this' (Noctis) aquí
-        PartyCommand(partyManager)
+        registerEconomyCommands()
+        registerJobCommands()
+        registerPartyCommands()
 
         val pm = server.pluginManager
         pm.registerEvents(RadiationListener(this, radiationManager), this)
@@ -68,11 +60,9 @@ class Noctis : JavaPlugin() {
         }
 
         logger.info("Noctis Core active. Loaded config for world: ${noctisConfig.worldName}")
-        logger.info("Ciclos de Radiación, Economía, Trabajos y Parties activos.")
     }
 
     override fun onDisable() {
-        CommandAPI.onDisable()
         if (::radiationManager.isInitialized) {
             radiationManager.getCacheSnapshot().forEach { (uuid, value) ->
                 Bukkit.getPlayer(uuid)?.persistentDataContainer?.set(
@@ -89,5 +79,29 @@ class Noctis : JavaPlugin() {
         val rsp = server.servicesManager.getRegistration(Permission::class.java)
         perms = rsp?.provider
         return perms != null
+    }
+
+    private fun registerEconomyCommands() {
+        val ecoExecutor = EconomyCommands(currencyManager, bankDatabase, taxTask)
+        getCommand("noctiseco")?.setExecutor(ecoExecutor)
+        getCommand("noctiseco")?.tabCompleter = ecoExecutor
+
+        getCommand("bank")?.setExecutor(ecoExecutor)
+        getCommand("bank")?.tabCompleter = ecoExecutor
+
+        getCommand("payfuel")?.setExecutor(ecoExecutor)
+        getCommand("payfuel")?.tabCompleter = ecoExecutor
+    }
+
+    private fun registerJobCommands() {
+        val jobExecutor = JobCommand(this, jobManager)
+        getCommand("noctisjobs")?.setExecutor(jobExecutor)
+        getCommand("noctisjobs")?.tabCompleter = jobExecutor
+    }
+
+    private fun registerPartyCommands() {
+        val partyExecutor = PartyCommand(partyManager)
+        getCommand("party")?.setExecutor(partyExecutor)
+        getCommand("party")?.tabCompleter = partyExecutor
     }
 }

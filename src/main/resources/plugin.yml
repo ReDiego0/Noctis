@@ -1,10 +1,23 @@
 name: Noctis
-version: "1.0.0"
+version: 1.0.0
 main: org.ReDiego0.noctis.Noctis
 api-version: '1.21'
 depend: [Towny]
 softdepend: [Vault, PlaceholderAPI, MythicMobs, Citizens, FastAsyncWorldEdit]
+commands:
+  noctiseco:
+    description: Comandos admin de economía
+    permission: noctis.admin.economy
+  bank:
+    description: Banco de ciudad
+  payfuel:
+    description: Pagar combustible a otro jugador
+  noctisjobs:
+    description: Comandos de trabajo
+    aliases: [jobs]
+  party:
+    description: Sistema de grupos
+    aliases: [p, noctisparty]
 permissions:
   noctis.admin.*:
-    description: Permisos de admin
     default: op
