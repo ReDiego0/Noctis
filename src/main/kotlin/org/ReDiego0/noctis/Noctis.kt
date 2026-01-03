@@ -5,6 +5,8 @@ import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 import org.ReDiego0.noctis.compat.NoctisExpansion
 import org.ReDiego0.noctis.config.NoctisConfig
+import org.ReDiego0.noctis.dungeons.DungeonManager
+import org.ReDiego0.noctis.dungeons.generation.WorldManager
 import org.ReDiego0.noctis.economy.BankDatabase
 import org.ReDiego0.noctis.economy.CurrencyManager
 import org.ReDiego0.noctis.economy.EconomyCommands
@@ -26,6 +28,7 @@ class Noctis : JavaPlugin() {
     lateinit var currencyManager: CurrencyManager private set
     lateinit var taxTask: TaxTask private set
     lateinit var partyManager: PartyManager private set
+    lateinit var dungeonManager: DungeonManager private set
 
     var perms: Permission? = null
 
@@ -42,6 +45,7 @@ class Noctis : JavaPlugin() {
         bankDatabase = BankDatabase(this)
         taxTask = TaxTask(this, bankDatabase)
         partyManager = PartyManager(noctisConfig)
+        dungeonManager = DungeonManager(this)
 
         taxTask.runTaskTimerAsynchronously(this, 1200L, 1200L)
         RadiationTask(this, radiationManager, noctisConfig, taxTask)
@@ -54,6 +58,9 @@ class Noctis : JavaPlugin() {
         val pm = server.pluginManager
         pm.registerEvents(RadiationListener(this, radiationManager), this)
         pm.registerEvents(org.ReDiego0.noctis.jobs.JobListener(this, jobManager), this)
+        pm.registerEvents(org.ReDiego0.noctis.dungeons.listeners.DungeonMobListener(dungeonManager), this)
+        pm.registerEvents(org.ReDiego0.noctis.dungeons.listeners.DungeonPuzzleListener(dungeonManager), this)
+        pm.registerEvents(org.ReDiego0.noctis.dungeons.listeners.DungeonPlayerListener(dungeonManager), this)
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             NoctisExpansion(this, noctisConfig).register()
