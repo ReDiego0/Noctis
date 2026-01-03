@@ -14,7 +14,13 @@ class TaxTask(
 ) : BukkitRunnable() {
 
     private val mm = MiniMessage.miniMessage()
-    private val protectedTowns = java.util.concurrent.ConcurrentHashMap.newKeySet<UUID>()
+    private val protectedTowns = java.util.concurrent.ConcurrentHashMap<UUID, Long>()
+
+    init {
+        val loaded = database.getAllProtectionExpiries()
+        protectedTowns.putAll(loaded)
+        plugin.logger.info("Restauradas ${loaded.size} ciudades protegidas desde la base de datos.")
+    }
 
     override fun run() {
         val now = System.currentTimeMillis()
@@ -24,35 +30,45 @@ class TaxTask(
         val minutesMs = TimeUnit.MINUTES.toMillis(plugin.noctisConfig.taxIntervalMinutes)
         val totalInterval = hoursMs + minutesMs
 
+        protectedTowns.entries.removeIf { it.value < now }
+
         if (nextRun == 0L) {
             nextRun = now + totalInterval
             database.setNextTaxTime(nextRun)
         }
 
         if (now >= nextRun) {
-            collectTaxes()
+            collectTaxes(totalInterval)
             database.setNextTaxTime(now + totalInterval)
         }
     }
 
     fun forceCollection() {
-        collectTaxes()
+        val hoursMs = TimeUnit.HOURS.toMillis(plugin.noctisConfig.taxIntervalHours)
+        val minutesMs = TimeUnit.MINUTES.toMillis(plugin.noctisConfig.taxIntervalMinutes)
+        collectTaxes(hoursMs + minutesMs)
     }
 
-    private fun collectTaxes() {
+    private fun collectTaxes(intervalMs: Long) {
         plugin.logger.info("=== INICIANDO COBRO DE COMBUSTIBLE NOCTIS ===")
 
         val towny = TownyAPI.getInstance()
         val cost = plugin.config.getInt("economy.taxes.cost", 10)
+        val now = System.currentTimeMillis()
+        val newExpiry = now + intervalMs
 
         protectedTowns.clear()
 
         for (town in towny.towns) {
             if (database.removeBalance(town.uuid, cost)) {
-                protectedTowns.add(town.uuid)
+                protectedTowns[town.uuid] = newExpiry
+                database.setProtectionExpiry(town.uuid, newExpiry)
+
                 val msg = mm.deserialize("<green>[SISTEMA] <gray>Combustible descontado (-$cost). Escudos activos.")
                 town.residents.forEach { it.player?.sendMessage(msg) }
             } else {
+                database.setProtectionExpiry(town.uuid, 0L)
+
                 val msg = mm.deserialize("<red><bold>[ALERTA] <gray>Fallo crítico de energía. Escudos desactivados.")
                 town.residents.forEach { it.player?.sendMessage(msg) }
                 plugin.logger.warning("Ciudad ${town.name} sin combustible.")
@@ -62,16 +78,28 @@ class TaxTask(
         }
     }
 
+    /**
+     * Verifica si una ciudad está protegida.
+     * Revisa la RAM y valida que el tiempo no haya expirado.
+     */
     fun isTownProtected(townUUID: UUID): Boolean {
-        return protectedTowns.contains(townUUID)
+        val expiry = protectedTowns[townUUID] ?: return false
+        return expiry > System.currentTimeMillis()
     }
 
     fun tryReactivate(townUUID: UUID, townName: String): Boolean {
         if (isTownProtected(townUUID)) return false
 
         val cost = plugin.config.getInt("economy.taxes.cost", 10)
+
+        val hoursMs = TimeUnit.HOURS.toMillis(plugin.noctisConfig.taxIntervalHours)
+        val minutesMs = TimeUnit.MINUTES.toMillis(plugin.noctisConfig.taxIntervalMinutes)
+        val interval = hoursMs + minutesMs
+        val newExpiry = System.currentTimeMillis() + interval
+
         if (database.removeBalance(townUUID, cost)) {
-            protectedTowns.add(townUUID)
+            protectedTowns[townUUID] = newExpiry
+            database.setProtectionExpiry(townUUID, newExpiry)
 
             val msg = mm.deserialize("<green>[SISTEMA] <white>Pago recibido. <aqua>Escudos de radiación REACTIVADOS.")
             TownyAPI.getInstance().getTown(townUUID)?.residents?.forEach { res ->

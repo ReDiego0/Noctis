@@ -49,6 +49,32 @@ class BankDatabase(private val plugin: Noctis) {
         save()
     }
 
+    fun setProtectionExpiry(townUUID: UUID, timestamp: Long) {
+        config.set("protection_expiry.$townUUID", timestamp)
+        save()
+    }
+
+    fun getProtectionExpiry(townUUID: UUID): Long {
+        return config.getLong("protection_expiry.$townUUID", 0L)
+    }
+
+    fun getAllProtectionExpiries(): Map<UUID, Long> {
+        val section = config.getConfigurationSection("protection_expiry") ?: return emptyMap()
+        val map = mutableMapOf<UUID, Long>()
+
+        for (key in section.getKeys(false)) {
+            try {
+                val uuid = UUID.fromString(key)
+                val time = section.getLong(key)
+                if (time > System.currentTimeMillis()) {
+                    map[uuid] = time
+                }
+            } catch (e: Exception) {
+            }
+        }
+        return map
+    }
+
     fun getNextTaxTime(): Long {
         return config.getLong("system.next_tax_time", 0L)
     }
