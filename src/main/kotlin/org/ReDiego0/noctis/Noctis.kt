@@ -6,7 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.ReDiego0.noctis.compat.NoctisExpansion
 import org.ReDiego0.noctis.config.NoctisConfig
 import org.ReDiego0.noctis.dungeons.DungeonManager
-import org.ReDiego0.noctis.dungeons.generation.WorldManager
+import org.ReDiego0.noctis.dungeons.DungeonCommand
 import org.ReDiego0.noctis.economy.BankDatabase
 import org.ReDiego0.noctis.economy.CurrencyManager
 import org.ReDiego0.noctis.economy.EconomyCommands
@@ -48,12 +48,13 @@ class Noctis : JavaPlugin() {
         dungeonManager = DungeonManager(this)
 
         taxTask.runTaskTimerAsynchronously(this, 1200L, 1200L)
-        RadiationTask(this, radiationManager, noctisConfig, taxTask)
+        RadiationTask(this, radiationManager, noctisConfig, taxTask, dungeonManager)
             .runTaskTimerAsynchronously(this, 20L, 20L)
 
         registerEconomyCommands()
         registerJobCommands()
         registerPartyCommands()
+        registerDungeonCommands()
 
         val pm = server.pluginManager
         pm.registerEvents(RadiationListener(this, radiationManager), this)
@@ -110,5 +111,11 @@ class Noctis : JavaPlugin() {
         val partyExecutor = PartyCommand(partyManager)
         getCommand("party")?.setExecutor(partyExecutor)
         getCommand("party")?.tabCompleter = partyExecutor
+    }
+
+    private fun registerDungeonCommands() {
+        val dungeonExecutor = DungeonCommand(dungeonManager, partyManager)
+        getCommand("dungeon")?.setExecutor(dungeonExecutor)
+        getCommand("dungeon")?.tabCompleter = dungeonExecutor
     }
 }

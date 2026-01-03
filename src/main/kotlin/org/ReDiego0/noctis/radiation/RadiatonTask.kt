@@ -9,14 +9,17 @@ import org.bukkit.Material
 import org.bukkit.scheduler.BukkitRunnable
 import org.ReDiego0.noctis.Noctis
 import org.ReDiego0.noctis.config.NoctisConfig
+import org.ReDiego0.noctis.dungeons.DungeonManager
 import org.ReDiego0.noctis.economy.TaxTask
+import org.bukkit.entity.Player
 import java.util.UUID
 
 class RadiationTask(
     private val plugin: Noctis,
     private val manager: RadiationManager,
     private val config: NoctisConfig,
-    private val taxTask: TaxTask
+    private val taxTask: TaxTask,
+    private val dungeonManager: DungeonManager
 ) : BukkitRunnable() {
 
     override fun run() {
@@ -60,6 +63,19 @@ class RadiationTask(
                 applyEffects(affectedPlayers)
             })
         }
+    }
+
+    private fun calculateRadiation(player: Player): Double {
+        if (player.world.name == "noctis_dungeons") {
+            val instance = dungeonManager.getDungeonByPlayer(player)
+            if (instance != null) {
+                // Radiación base * Multiplicador de la dungeon
+                return config.baseRadiation * instance.dungeonData.radiationMultiplier
+            }
+            // Si está en el mundo void pero sin instancia (bug/admin), radiación base
+            return config.baseRadiation
+        }
+        return config.baseRadiation
     }
 
     private fun calculateMitigation(armorContents: Array<out org.bukkit.inventory.ItemStack?>): Double {

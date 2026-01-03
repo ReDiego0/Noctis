@@ -18,6 +18,9 @@ commands:
   party:
     description: Sistema de grupos
     aliases: [p, noctisparty]
+  dungeon:
+    description: Comandos de incursión
+    permission: noctis.dungeons.play
 permissions:
   noctis.admin.*:
     default: op

@@ -6,6 +6,7 @@ import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.ReDiego0.noctis.dungeons.config.DungeonData
 import org.ReDiego0.noctis.party.Party
+import org.bukkit.Bukkit
 import java.util.UUID
 
 class DungeonInstance(
@@ -75,14 +76,44 @@ class DungeonInstance(
     }
 
     fun finishDungeon(success: Boolean) {
+        if (isEnded) return
         isEnded = true
+
         if (success) {
-            broadcast("<gold><bold>¡Dungeon Completada!")
-            // Dar recompensas
+            broadcast("<gradient:#00ff00:#00ffff><bold>¡DUNGEON COMPLETADA!</bold></gradient>")
+            giveRewards()
         } else {
-            broadcast("<red><bold>Dungeon Fallida.")
+            broadcast("<red><bold>Misión Fallida. Protocolo de extracción iniciado.</bold>")
         }
-        // El Manager se encargará de limpiar/expulsar jugadores después
+
+        // Teletransportar fuera tras 5 segundos (Cinemático)
+        val safeSpawn = Bukkit.getWorld("world")?.spawnLocation ?: originLocation // Fallback
+
+        Bukkit.getScheduler().runTaskLater(org.bukkit.plugin.java.JavaPlugin.getProvidingPlugin(this::class.java), Runnable {
+            party.getMembers().mapNotNull { it.getPlayer() }.forEach { p ->
+                p.teleport(safeSpawn)
+                p.sendMessage(mm.deserialize("<gray>Has regresado a salvo."))
+            }
+            // TODO: Notificar al Manager para destruir esta instancia de la RAM
+        }, 100L) // 5 segundos
+    }
+
+    private fun giveRewards() {
+        val rewards = dungeonData.rewards
+
+        // Dinero directo (si usas Vault economía)
+        // rewards.money -> implementar si tienes Vault Economy
+
+        // Comandos
+        if (rewards.commands.isNotEmpty()) {
+            val console = Bukkit.getConsoleSender()
+            getAlivePlayers().forEach { p ->
+                rewards.commands.forEach { cmd ->
+                    val finalCmd = cmd.replace("%player%", p.name)
+                    Bukkit.dispatchCommand(console, finalCmd)
+                }
+            }
+        }
     }
 
     fun spawnRoomMobs(room: RoomInstance) {

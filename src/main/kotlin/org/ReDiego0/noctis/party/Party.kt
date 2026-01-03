@@ -2,6 +2,7 @@ package org.ReDiego0.noctis.party
 
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.entity.Player
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -17,7 +18,6 @@ class Party(val leaderUUID: UUID) {
 
     val id: UUID = UUID.randomUUID()
     private val members = ConcurrentHashMap<UUID, PartyMember>()
-    private val maxSize = 5
 
     init {
         members[leaderUUID] = PartyMember(leaderUUID, PartyRole.LEADER)
@@ -28,9 +28,7 @@ class Party(val leaderUUID: UUID) {
     fun getLeader(): PartyMember? = members.values.find { it.role == PartyRole.LEADER }
 
     fun addMember(player: Player): Boolean {
-        if (members.size >= maxSize) return false
         if (members.containsKey(player.uniqueId)) return false
-
         members[player.uniqueId] = PartyMember(player.uniqueId, PartyRole.MEMBER)
         return true
     }
@@ -48,4 +46,15 @@ class Party(val leaderUUID: UUID) {
     fun isEmpty(): Boolean = members.isEmpty()
 
     fun getSize(): Int = members.size
+
+    fun areAllMembersNearby(location: Location, radius: Double): Boolean {
+        val onlineMembers = members.values.mapNotNull { it.getPlayer() }
+
+        // Si no hay nadie online (raro, porque el líder ejecutó el comando), retornamos false
+        if (onlineMembers.isEmpty()) return false
+
+        return onlineMembers.all { p ->
+            p.world == location.world && p.location.distance(location) <= radius
+        }
+    }
 }

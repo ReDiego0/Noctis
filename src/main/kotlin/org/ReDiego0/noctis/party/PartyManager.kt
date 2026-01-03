@@ -111,4 +111,8 @@ class PartyManager(private val config: NoctisConfig) {
 
         return false
     }
+
+    private fun areAllMembersNearby() {
+
+    }
 }
