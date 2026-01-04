@@ -36,7 +36,7 @@ class Noctis : JavaPlugin() {
         noctisConfig = NoctisConfig(this)
 
         if (!setupPermissions()) {
-            logger.warning("Vault no encontrado o sin plugin de permisos. Comandos de Jobs limitados.")
+            logger.warning("Vault no encontrado. Comandos de Jobs limitados.")
         }
 
         radiationManager = RadiationManager()
@@ -45,9 +45,10 @@ class Noctis : JavaPlugin() {
         bankDatabase = BankDatabase(this)
         taxTask = TaxTask(this, bankDatabase)
         partyManager = PartyManager(noctisConfig)
-        dungeonManager = DungeonManager(this)
+        dungeonManager = DungeonManager(this) // Inicializa y carga configs
 
         taxTask.runTaskTimerAsynchronously(this, 1200L, 1200L)
+
         RadiationTask(this, radiationManager, noctisConfig, taxTask, dungeonManager)
             .runTaskTimerAsynchronously(this, 20L, 20L)
 
@@ -59,6 +60,7 @@ class Noctis : JavaPlugin() {
         val pm = server.pluginManager
         pm.registerEvents(RadiationListener(this, radiationManager), this)
         pm.registerEvents(org.ReDiego0.noctis.jobs.JobListener(this, jobManager), this)
+
         pm.registerEvents(org.ReDiego0.noctis.dungeons.listeners.DungeonMobListener(dungeonManager), this)
         pm.registerEvents(org.ReDiego0.noctis.dungeons.listeners.DungeonPuzzleListener(dungeonManager), this)
         pm.registerEvents(org.ReDiego0.noctis.dungeons.listeners.DungeonPlayerListener(dungeonManager), this)
@@ -79,6 +81,10 @@ class Noctis : JavaPlugin() {
                     value
                 )
             }
+        }
+
+        if (::dungeonManager.isInitialized) {
+            dungeonManager.cleanupAll()
         }
     }
 

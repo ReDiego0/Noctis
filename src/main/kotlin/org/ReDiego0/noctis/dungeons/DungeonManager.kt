@@ -26,87 +26,81 @@ class DungeonManager(private val plugin: Noctis) {
         paster = SchematicPaster(plugin)
         loader.loadAll()
 
-        plugin.logger.info("DungeonManager inicializado.")
+        plugin.logger.info("DungeonManager inicializado. Schematics listos.")
     }
 
     fun getDungeonByPlayer(player: Player): DungeonInstance? {
         return playerInstanceMap[player.uniqueId]
     }
 
-    /**
-     * Inicia una nueva Dungeon para una Party.
-     * método complejo que orquesta todo (Generación Procedural).
-     */
     fun startDungeon(party: Party, dungeonId: String) {
-        val data = loader.getDungeon(dungeonId) ?: return // Validar ID
+        val data = loader.getDungeon(dungeonId)
+        if (data == null) {
+            party.broadcast(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize("<red>Error: Dungeon '$dungeonId' no encontrada en config."))
+            return
+        }
+
         val worldOrigin = worldManager.getNextFreeLocation()
 
-        // 1. Crear la instancia vacía
         val instance = DungeonInstance(
             dungeonData = data,
             party = party,
             originLocation = worldOrigin
         )
 
-        // 2. Generación Procedural (Seleccionar salas)
         var currentZ = 0.0
-        val padding = 50.0 // Espacio vacío entre salas para que no se vean/toquen
+        val padding = 50.0
 
         for (layer in data.layers) {
-            // Buscar candidatos que cumplan los filtros del layer
             val candidates = loader.getSchematicsByTags(layer.filters.mustHaveTags, layer.filters.cantHaveTags)
 
             if (candidates.isEmpty()) {
-                plugin.logger.severe("¡Error Crítico! No hay schematics para el layer con tags: ${layer.filters.mustHaveTags}")
+                plugin.logger.severe("¡Error Crítico! No hay schematics para tags: ${layer.filters.mustHaveTags}")
                 continue
             }
 
-            // Elegir X salas al azar de los candidatos
             for (i in 0 until layer.count) {
                 val selectedSchem = candidates.random()
 
-                // Calcular posición real en el mundo
-                // X es fijo para la dungeon, Z avanza
                 val roomOrigin = worldOrigin.clone().add(0.0, 0.0, currentZ)
 
-                // 3. Pegar Físicamente (Async pero bloqueamos lógica hasta terminar o usamos callback)
-                // Nota: Por simplicidad en MVP, asumimos que paster es rápido.
-                // En prod idealmente precargaríamos o pausaríamos a los jugadores.
-                paster.paste(selectedSchem.filename, roomOrigin)
+                if (!paster.paste(selectedSchem.filename, roomOrigin)) {
+                    plugin.logger.warning("Fallo al pegar schematic: ${selectedSchem.filename}")
+                }
 
-                // 4. Crear Instancia de Sala
                 val roomInstance = RoomInstance(selectedSchem, roomOrigin)
                 instance.rooms.add(roomInstance)
-
-                // Avanzar Z para la siguiente sala (distancia del schematic + padding)
-                // Como no leemos el tamaño real del .schem aquí, usamos una estimación o el exit-trigger.
-                // Mejor aproximación: Usar la distancia del exit trigger Z + un margen seguro.
                 currentZ += selectedSchem.exitTriggerOffset.z + padding
             }
         }
 
         if (instance.rooms.isEmpty()) {
-            party.broadcast(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize("<red>Error al generar la dungeon. Contacta a un admin."))
+            party.broadcast(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize("<red>Error de generación. Dungeon vacía."))
             return
         }
 
-        // 5. Registrar y Teletransportar
         activeDungeons[instance.id] = instance
         party.getMembers().forEach { member ->
             playerInstanceMap[member.uuid] = instance
         }
 
-        // Mover a la sala 1
-        instance.currentRoomIndex = -1 // Hack para que advanceToNextRoom ponga 0
+        instance.currentRoomIndex = -1 // Truco para que el advance ponga el index en 0
         instance.advanceToNextRoom()
 
-        plugin.logger.info("Dungeon iniciada: ${data.displayName} para party de ${party.getLeader()?.uuid}")
+        plugin.logger.info("Dungeon iniciada: ${data.displayName} (ID: ${instance.id})")
     }
 
-    // Método para limpiar cuando termina (se llamará después)
-    fun stopDungeon(instance: DungeonInstance) {
-        activeDungeons.remove(instance.id)
-        instance.party.getMembers().forEach { playerInstanceMap.remove(it.uuid) }
-        // TODO: Teletransportar jugadores fuera si siguen dentro
+    fun stopDungeon(instanceId: UUID) {
+        val instance = activeDungeons.remove(instanceId) ?: return
+
+        instance.party.getMembers().forEach { member ->
+            playerInstanceMap.remove(member.uuid)
+        }
+        plugin.logger.info("Dungeon finalizada y limpiada: ${instance.id}")
+    }
+
+    // Para limpiar al apagar el server
+    fun cleanupAll() {
+        activeDungeons.keys.toList().forEach { stopDungeon(it) }
     }
 }
